@@ -16,9 +16,9 @@ public class Testing {
             String query = scanner.nextLine();
             System.out.println("Searching for: " + query + " ... ");
             SearchResult result = ytma.search(query);
-            if (result.getSongs() != null) {
-                for (int i = 0; i < result.getSongs().size(); i++) {
-                    Track item = result.getSongs().get(i);
+            if (result.getTracks() != null) {
+                for (int i = 0; i < result.getTracks().size(); i++) {
+                    Track item = result.getTracks().get(i);
                     System.out.println(i + 1 + ". \"" + item.getTitle() + "\" by \"" + item.getArtist() + "\" #" + item.getId() + " s" + item.getDuration());
                 }
             } else {

@@ -16,7 +16,7 @@ public class SearchResult {
     private static final String REFERER_PATH = "https://music.youtube.com/";
 
     private final YTMA ytma;
-    private final LinkedList<Track> songs = new LinkedList<>();
+    private final LinkedList<Track> tracks = new LinkedList<>();
     private final LinkedList<Video> videos = new LinkedList<>();
 
     SearchResult(YTMA ytma, String query) {
@@ -47,7 +47,7 @@ public class SearchResult {
                 JSONArray shelfContents = shelfRenderer.getJSONArray("contents");
                 if (topic.equals("Songs")) {
                     for (int a = 0; a < shelfContents.length(); a++) {
-                        this.songs.add(new Track(shelfContents.getJSONObject(a).getJSONObject("musicResponsiveListItemRenderer")));
+                        this.tracks.add(new Track(shelfContents.getJSONObject(a).getJSONObject("musicResponsiveListItemRenderer")));
                     }
                 } else if (topic.equals("Videos")) {
                     for (int a = 0; a < shelfContents.length(); a++) {
@@ -92,8 +92,12 @@ public class SearchResult {
         return json;
     }
 
-    public LinkedList<Track> getSongs() {
-        return this.songs;
+    public LinkedList<Track> getTracks() {
+        return this.tracks;
+    }
+
+    public LinkedList<Video> getVideos() {
+        return this.videos;
     }
 
 }
