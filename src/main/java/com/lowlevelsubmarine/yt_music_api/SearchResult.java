@@ -12,24 +12,25 @@ import java.util.LinkedList;
 
 public class SearchResult {
 
-    private static final String ENDPOINT_PATH = "https://music.youtube.com/youtubei/v1/search";
-    private static final String REFERER_PATH = "https://music.youtube.com/";
-
     private final YTMA ytma;
-    private final LinkedList<Track> tracks = new LinkedList<>();
+    private final LinkedList<Song> songs = new LinkedList<>();
     private final LinkedList<Video> videos = new LinkedList<>();
+    private String songParams;
+    private String videoParams;
+    private String query;
 
     SearchResult(YTMA ytma, String query) {
         this.ytma = ytma;
+        this.query = escapeQuery(query);
         try {
             URI uri = buildURI(this.ytma.getKey());
             HttpPost post = new HttpPost(uri);
-            post.setHeader(Statics.HTTP_HEADER_REFERER, REFERER_PATH);
-            post.setEntity(new StringEntity(createSearchHeader(query)));
+            post.setHeader(Statics.HTTP_HEADER_REFERER, Statics.REFERER_PATH);
+            post.setEntity(new StringEntity(new Context().setQuery(this.query).toString()));
             long start = System.currentTimeMillis();
-            Thread.sleep(200);
+            //Thread.sleep(200);
             HttpResponse response = this.ytma.getHttpManager().execute(post);
-            System.out.println(System.currentTimeMillis() - start + "ms searching time");
+            System.out.println(System.currentTimeMillis() - start + "ms search fetching time");
             parseJSON(HttpTools.toHtml(response));
         } catch (Exception e) {
             e.printStackTrace();
@@ -38,29 +39,47 @@ public class SearchResult {
 
     private void parseJSON(String raw) {
         JSONObject json = new JSONObject(raw);
-        JSONArray list = json.getJSONObject("contents").getJSONObject("sectionListRenderer").getJSONArray("contents");
-        for (int i = 0; i < list.length(); i++) {
-            JSONObject item = list.getJSONObject(i);
+        JSONArray contents = json.getJSONObject("contents")
+                .getJSONObject("sectionListRenderer")
+                .getJSONArray("contents");
+        for (int i = 0; i < contents.length(); i++) {
+            JSONObject item = contents.getJSONObject(i);
             if (item.has("musicShelfRenderer")) {
                 JSONObject shelfRenderer = item.getJSONObject("musicShelfRenderer");
-                String topic = JSONTools.convertRuns(shelfRenderer.getJSONObject("title"));
+                String category = JSONTools.convertRuns(shelfRenderer.getJSONObject("title"));
                 JSONArray shelfContents = shelfRenderer.getJSONArray("contents");
-                if (topic.equals("Songs")) {
+                if (category.equals("Songs")) {
                     for (int a = 0; a < shelfContents.length(); a++) {
-                        this.tracks.add(new Track(shelfContents.getJSONObject(a).getJSONObject("musicResponsiveListItemRenderer")));
+                        this.songs.add(new Song(shelfContents.getJSONObject(a).getJSONObject("musicResponsiveListItemRenderer"), true));
                     }
-                } else if (topic.equals("Videos")) {
+                } else if (category.equals("Videos")) {
                     for (int a = 0; a < shelfContents.length(); a++) {
                         this.videos.add(new Video(shelfContents.getJSONObject(a).getJSONObject("musicResponsiveListItemRenderer")));
                     }
                 }
             }
         }
+        JSONArray headerChips = json
+                .getJSONObject("header")
+                .getJSONObject("musicHeaderRenderer")
+                .getJSONObject("header")
+                .getJSONObject("chipCloudRenderer")
+                .getJSONArray("chips");
+        for (int i = 0; i < headerChips.length(); i++) {
+            JSONObject chipRenderer = headerChips.getJSONObject(i).getJSONObject("chipCloudChipRenderer");
+            String category = JSONTools.convertRuns(chipRenderer.getJSONObject("text"));
+            String token = chipRenderer.getJSONObject("navigationEndpoint").getJSONObject("searchEndpoint").getString("params");
+            if (category.equals("Songs")) {
+                this.songParams = token;
+            } else if (category.equals("Videos")) {
+                this.videoParams = token;
+            }
+        }
     }
 
     private URI buildURI(String key) {
         try {
-            return new URIBuilder(ENDPOINT_PATH)
+            return new URIBuilder(Statics.SEARCH_ENDPOINT_PATH)
                     .addParameter("alt", "json")
                     .addParameter("key", key).build();
         } catch (Exception e) {
@@ -69,35 +88,27 @@ public class SearchResult {
         }
     }
 
-    private String createSearchHeader(String query) {
-        JSONObject json = new JSONObject();
-        json.put("query", query);
-        json.put("context", createContext());
-        return json.toString();
+    private String escapeQuery(String raw) {
+        return raw.replaceAll("ä", "ae")
+                .replaceAll("ö", "oe")
+                .replaceAll("ü", "ue")
+                .replaceAll("ß", "ss");
     }
 
-    private JSONObject createContext() {
-        JSONObject json = new JSONObject();
-        json.put("client", createClient());
-        return json;
+    public String getQuery() {
+        return this.query;
     }
 
-    private JSONObject createClient() {
-        JSONObject json = new JSONObject();
-        json.put("clientName", "WEB_REMIX");
-        json.put("clientVersion", "0.1");
-        //json.put("experimentIds", JSONObject.NULL);
-        //json.put("gl", "US");
-        //json.put("hl", "en");
-        return json;
-    }
-
-    public LinkedList<Track> getTracks() {
-        return this.tracks;
+    public LinkedList<Song> getSongs() {
+        return this.songs;
     }
 
     public LinkedList<Video> getVideos() {
         return this.videos;
+    }
+
+    public SongResult fetchSongResults() {
+        return new SongResult(this.ytma, query, songParams);
     }
 
 }

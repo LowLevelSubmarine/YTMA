@@ -9,9 +9,12 @@ public class JSONTools {
     }
 
     public static String flexColumnToString(JSONObject flexColumn) {
-        return JSONTools.convertRuns(flexColumn
-                .getJSONObject("musicResponsiveListItemFlexColumnRenderer")
-                .getJSONObject("text"));
+        JSONObject flexColumnRenderer = flexColumn.getJSONObject("musicResponsiveListItemFlexColumnRenderer");
+        if (flexColumnRenderer.has("text")) {
+            return convertRuns(flexColumnRenderer.getJSONObject("text"));
+        } else {
+            return null;
+        }
     }
 
 }

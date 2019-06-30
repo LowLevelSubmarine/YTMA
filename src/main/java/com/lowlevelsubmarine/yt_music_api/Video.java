@@ -27,14 +27,17 @@ public class Video {
         Matcher matcher = Pattern.compile("(\\d{1,3})(\\S)* views").matcher(raw);
         if (matcher.find()) {
             int val = Integer.valueOf(matcher.group(1));
-            switch (matcher.group(2)) {
-                case "M":
-                    return val*1000000;
-                case "T":
-                    return val*1000;
-                default:
-                    System.out.println(val);
-                    return val;
+            if (matcher.group(2) != null) {
+                switch (matcher.group(2)) {
+                    case "B":
+                        return val*1000*3;
+                    case "M":
+                        return val*1000*2;
+                    case "K":
+                        return val*1000;
+                }
+            } else {
+                return val;
             }
         }
         return -1;

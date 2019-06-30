@@ -27,6 +27,10 @@ public class YTMA {
         return new SearchResult(this, query);
     }
 
+    public void prepare() {
+        getKey();
+    }
+
     String getKey() {
         if (this.key == null) {
             long start = System.currentTimeMillis();
