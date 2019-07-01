@@ -18,7 +18,6 @@ public class Testing {
             String query = scanner.nextLine();
             System.out.println("Searching for: " + query + " ... ");
             SearchResult result = ytma.search(query);
-            //System.out.println(result.getSongs().getFirst().getTitle() + " #" + result.getSongs().getFirst().getId());
             LinkedList<Song> songs = result.fetchSongResults().getSongs();
             for (Song song : songs) {
                 System.out.println(song.getArtist() +  " / " + song.getTitle() + " #" + song.getId());

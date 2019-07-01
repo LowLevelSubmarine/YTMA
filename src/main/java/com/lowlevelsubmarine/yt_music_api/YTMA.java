@@ -4,6 +4,9 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.json.JSONObject;
 
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,17 +36,21 @@ public class YTMA {
 
     String getKey() {
         if (this.key == null) {
-            long start = System.currentTimeMillis();
-            HttpGet get = new HttpGet(DOMAIN);
-            HttpResponse response = this.httpManager.execute(get);
-            String html = HttpTools.toHtml(response);
-            Matcher htmlMatcher = PAT_YTCFG_JSON.matcher(html);
-            if (htmlMatcher.find()) {
-                JSONObject jsonYtCfg = new JSONObject(htmlMatcher.group(1));
-                System.out.println(System.currentTimeMillis() - start + "ms key fetching time");
-                this.key = jsonYtCfg.getString("INNERTUBE_API_KEY");
-            } else {
-                return null;
+            try {
+                URL url = new URL(DOMAIN);
+                long start = System.currentTimeMillis();
+                HttpURLConnection con = this.httpManager.getConnection(url);
+                String response = this.httpManager.executeGet(con);
+                Matcher htmlMatcher = PAT_YTCFG_JSON.matcher(response);
+                if (htmlMatcher.find()) {
+                    JSONObject json = new JSONObject(htmlMatcher.group(1));
+                    System.out.println(System.currentTimeMillis() - start + "ms key fetching time");
+                    this.key = json.getString("INNERTUBE_API_KEY");
+                } else {
+                    return null;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
         return this.key;

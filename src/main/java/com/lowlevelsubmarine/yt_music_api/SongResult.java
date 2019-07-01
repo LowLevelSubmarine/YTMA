@@ -1,12 +1,10 @@
 package com.lowlevelsubmarine.yt_music_api;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.StringEntity;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.LinkedList;
 
@@ -19,14 +17,13 @@ public class SongResult {
         this.ytma = ytma;
         try {
             URI uri = buildURI(this.ytma.getKey());
-            HttpPost post = new HttpPost(uri);
-            post.setHeader(Statics.HTTP_HEADER_REFERER, Statics.REFERER_PATH);
-            post.setEntity(new StringEntity(new Context().setQuery(query).setParams(params).toString()));
+            HttpURLConnection con = this.ytma.getHttpManager().getConnection(uri.toURL());
+            con.setRequestProperty(Statics.HTTP_HEADER_REFERER, Statics.REFERER_PATH);
+            String postContent = new Context().setQuery(query).setParams(params).toString();
             long start = System.currentTimeMillis();
-            //Thread.sleep(200);
-            HttpResponse response = this.ytma.getHttpManager().execute(post);
+            String response = this.ytma.getHttpManager().executePost(con, postContent);
             System.out.println(System.currentTimeMillis() - start + "ms song fetching time");
-            parseJSON(HttpTools.toHtml(response));
+            parseJSON(response);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -37,10 +34,7 @@ public class SongResult {
         JSONObject json = new JSONObject(raw);
         JSONArray contents = json.getJSONObject("contents")
                 .getJSONObject("sectionListRenderer")
-                .getJSONArray("contents")
-                /*.getJSONObject(0)
-                .getJSONObject("musicShelfRenderer")
-                .getJSONArray("contents")*/;
+                .getJSONArray("contents");
         for (int i = 0; i < contents.length(); i++) {
             JSONObject item = contents.getJSONObject(i);
             if (item.has("musicShelfRenderer")) {

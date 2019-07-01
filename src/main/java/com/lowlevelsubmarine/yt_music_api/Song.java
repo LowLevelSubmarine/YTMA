@@ -9,26 +9,40 @@ public class Song {
     private final String id;
     private final String title;
     private final String artist;
-    private String album;
+    private final String album;
+    private final Cover cover;
     private final long duration;
 
     Song(JSONObject obj, boolean containsCategory) {
         this.id = obj.getJSONObject("doubleTapCommand").getJSONObject("watchEndpoint").getString("videoId");
         JSONArray flexColumns = obj.getJSONArray("flexColumns");
-        this.title = JSONTools.flexColumnToString(flexColumns.getJSONObject(0));
+        String durationString;
         if (containsCategory) {
-            this.artist = JSONTools.flexColumnToString(flexColumns.getJSONObject(2));
-            this.album = JSONTools.flexColumnToString(flexColumns.getJSONObject(3));
-            this.duration = FormatTools.durationTextToMillis(JSONTools.flexColumnToString(flexColumns.getJSONObject(4)));
+            this.artist = parseFlexColumnString(flexColumns, 2);
+            this.album = parseFlexColumnString(flexColumns, 3);
+            durationString = parseFlexColumnString(flexColumns, 4);
         } else {
-            this.artist = JSONTools.flexColumnToString(flexColumns.getJSONObject(1));
-            try {
-                this.album = JSONTools.flexColumnToString(flexColumns.getJSONObject(2));
-            } catch (JSONException e) {
-                this.album = null;
-                System.out.println("Error: " + this.title + " #" + this.id);
-            }
-            this.duration = FormatTools.durationTextToMillis(JSONTools.flexColumnToString(flexColumns.getJSONObject(3)));
+            this.artist = parseFlexColumnString(flexColumns, 1);
+            this.album = parseFlexColumnString(flexColumns, 2);
+            durationString = parseFlexColumnString(flexColumns, 3);
+        }
+        this.title = JSONTools.flexColumnToString(flexColumns.getJSONObject(0));
+        if (durationString != null) {
+            this.duration = FormatTools.durationTextToMillis(durationString);
+        } else {
+            this.duration = -1;
+        }
+        this.cover = new Cover(obj.getJSONObject("thumbnail")
+                .getJSONObject("musicThumbnailRenderer")
+                .getJSONObject("thumbnail")
+                .getJSONArray("thumbnails"));
+    }
+
+    private String parseFlexColumnString(JSONArray array, int index) {
+        try {
+            return JSONTools.flexColumnToString(array.getJSONObject(index));
+        } catch (JSONException e) {
+            return null;
         }
     }
 
@@ -50,6 +64,56 @@ public class Song {
 
     public long getDuration() {
         return duration;
+    }
+
+    public Cover getCover() {
+        return this.cover;
+    }
+
+    public class Cover {
+
+        private String url60;
+        private String url120;
+        private String url226;
+        private String url544;
+
+        private Cover(JSONArray thumbnails) {
+            for (int i = 0; i < thumbnails.length(); i++) {
+                try {
+                    JSONObject thumbnail = thumbnails.getJSONObject(i);
+                    int width = thumbnail.getInt("width");
+                    String url = thumbnail.getString("url");
+                    if (width == 60) {
+                        this.url60 = url;
+                    } else if (width == 120) {
+                        this.url120 = url;
+                    } else if (width == 226) {
+                        this.url226 = url;
+                    } else if (width == 544) {
+                        this.url544 = url;
+                    }
+                } catch (Exception e) {
+                    //Does: Skip thumbnail
+                }
+            }
+        }
+
+        public String getUrl60() {
+            return url60;
+        }
+
+        public String getUrl120() {
+            return url120;
+        }
+
+        public String getUrl226() {
+            return url226;
+        }
+
+        public String getUrl544() {
+            return url544;
+        }
+
     }
     
 }
