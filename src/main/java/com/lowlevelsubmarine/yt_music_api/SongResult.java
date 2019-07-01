@@ -1,6 +1,5 @@
 package com.lowlevelsubmarine.yt_music_api;
 
-import org.apache.http.client.utils.URIBuilder;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -48,9 +47,7 @@ public class SongResult {
 
     private URI buildURI(String key) {
         try {
-            return new URIBuilder(Statics.SEARCH_ENDPOINT_PATH)
-                    .addParameter("alt", "json")
-                    .addParameter("key", key).build();
+            return new URI(Statics.SEARCH_ENDPOINT_PATH + "?alt=json&key=" + key);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
