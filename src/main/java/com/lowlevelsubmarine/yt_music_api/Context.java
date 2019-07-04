@@ -11,6 +11,16 @@ public class Context {
         this.json.put("context", createContext());
     }
 
+    public Context setVideoId(String videoId) {
+        this.json.put("videoId", videoId);
+        return this;
+    }
+
+    public Context setEnableAutoPlay(boolean bool) {
+        this.json.put("enableAutoPlay", bool);
+        return this;
+    }
+
     public Context setQuery(String query) {
         this.json.put("query", query);
         return this;
