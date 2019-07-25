@@ -5,9 +5,11 @@ import org.json.JSONObject;
 
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 
-public class SearchResult {
+public class SearchResults {
 
     private final YTMA ytma;
     private final LinkedList<Song> songs = new LinkedList<>();
@@ -16,10 +18,10 @@ public class SearchResult {
     private String videoParams;
     private String query;
 
-    SearchResult(YTMA ytma, String query) {
+    SearchResults(YTMA ytma, String query) {
         this.ytma = ytma;
-        this.query = escapeQuery(query);
         try {
+            this.query = URLEncoder.encode(query, StandardCharsets.UTF_8.toString());
             URI uri = buildURI(this.ytma.getKey());
             HttpURLConnection con = this.ytma.getHttpManager().getConnection(uri.toURL());
             con.setRequestProperty(Statics.HTTP_HEADER_REFERER, Statics.REFERER_PATH);
@@ -50,7 +52,7 @@ public class SearchResult {
                     }
                 } else if (category.equals("Videos")) {
                     for (int a = 0; a < shelfContents.length(); a++) {
-                        this.videos.add(new Video(shelfContents.getJSONObject(a).getJSONObject("musicResponsiveListItemRenderer")));
+                        this.videos.add(new Video(shelfContents.getJSONObject(a).getJSONObject("musicResponsiveListItemRenderer"), true));
                     }
                 }
             }
@@ -82,13 +84,6 @@ public class SearchResult {
         }
     }
 
-    private String escapeQuery(String raw) {
-        return raw.replaceAll("ä", "ae")
-                .replaceAll("ö", "oe")
-                .replaceAll("ü", "ue")
-                .replaceAll("ß", "ss");
-    }
-
     public String getQuery() {
         return this.query;
     }
@@ -102,7 +97,11 @@ public class SearchResult {
     }
 
     public SongResult fetchSongResults() {
-        return new SongResult(this.ytma, query, songParams);
+        return new SongResult(this.ytma, this.query, this.songParams);
+    }
+
+    public VideoResults fetchVideoResults() {
+        return new VideoResults(this.ytma, this.query, this.videoParams);
     }
 
 }

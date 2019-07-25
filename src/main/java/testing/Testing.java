@@ -1,10 +1,9 @@
 package testing;
 
-import com.lowlevelsubmarine.yt_music_api.SearchResult;
-import com.lowlevelsubmarine.yt_music_api.Song;
+import com.lowlevelsubmarine.yt_music_api.SearchResults;
+import com.lowlevelsubmarine.yt_music_api.VideoResults;
 import com.lowlevelsubmarine.yt_music_api.YTMA;
 
-import java.util.LinkedList;
 import java.util.Scanner;
 
 public class Testing {
@@ -17,11 +16,8 @@ public class Testing {
             Scanner scanner = new Scanner(System.in);
             String query = scanner.nextLine();
             System.out.println("Searching for: " + query + " ... ");
-            SearchResult result = ytma.search(query);
-            LinkedList<Song> songs = result.fetchSongResults().getSongs();
-            for (Song song : songs) {
-                System.out.println(song.getArtist() +  " / " + song.getTitle() + " #" + song.getId());
-            }
+            SearchResults result = ytma.search(query);
+            System.out.println(result.getSongs().getFirst().getTitle());
         }
     }
 

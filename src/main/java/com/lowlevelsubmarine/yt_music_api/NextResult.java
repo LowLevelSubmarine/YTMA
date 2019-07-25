@@ -14,14 +14,19 @@ public class NextResult {
     private final String id;
     private final LinkedList<Song> songs = new LinkedList<>();
 
-    public NextResult(YTMA ytma, String id) {
+    NextResult(YTMA ytma, String id) {
         this.ytma = ytma;
         this.id = id;
         try {
             URI uri = buildURI(this.ytma.getKey());
             HttpURLConnection con = this.ytma.getHttpManager().getConnection(uri.toURL());
             con.setRequestProperty(Statics.HTTP_HEADER_REFERER, Statics.REFERER_PATH);
-            String postContent = new Context().setEnableAutoPlay(true).setVideoId(id).toString();
+            String postContent = new Context()
+                    .setEnablePersistentPlaylistPanel(true)
+                    .setIsAudioOnly(true)
+                    .setTunerSettingsValue(Context.TunerSetting.AUTOMIX_SETTINGS_NORMAL)
+                    .setVideoId(id)
+                    .toString();
             long start = System.currentTimeMillis();
             String response = this.ytma.getHttpManager().executePost(con, postContent);
             System.out.println(System.currentTimeMillis() - start + "ms search fetching time");

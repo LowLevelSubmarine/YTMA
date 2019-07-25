@@ -23,8 +23,12 @@ public class YTMA {
         return this.httpManager;
     }
 
-    public SearchResult search(String query) {
-        return new SearchResult(this, query);
+    public SearchResults search(String query) {
+        return new SearchResults(this, query);
+    }
+
+    public NextResult getNext(String id) {
+        return new NextResult(this, id);
     }
 
     public void prepare() {

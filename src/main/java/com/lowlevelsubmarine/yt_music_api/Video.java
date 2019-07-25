@@ -1,6 +1,7 @@
 package com.lowlevelsubmarine.yt_music_api;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.regex.Matcher;
@@ -9,18 +10,25 @@ import java.util.regex.Pattern;
 public class Video {
 
     private final String id;
-    private final String title;
-    private final String channel;
-    private final int views;
-    private final long duration;
+    private String title;
+    private String channel;
+    private int views;
+    private long duration;
 
-    public Video(JSONObject json) {
+    public Video(JSONObject json, boolean hasCategoryField) {
         this.id = json.getJSONObject("doubleTapCommand").getJSONObject("watchEndpoint").getString("videoId");
         JSONArray flexColumns = json.getJSONArray("flexColumns");
         this.title = JSONTools.flexColumnToString(flexColumns.getJSONObject(0));
-        this.channel = JSONTools.flexColumnToString(flexColumns.getJSONObject(2));
-        this.views = parseViews(JSONTools.flexColumnToString(flexColumns.getJSONObject(3)));
-        this.duration = FormatTools.durationTextToMillis(JSONTools.flexColumnToString(flexColumns.getJSONObject(4)));
+        String[] fields = new String[4];
+        try {
+            for (int i = 0; i < 4; i++) {
+                fields[i] = JSONTools.flexColumnToString(flexColumns.getJSONObject(i + 1));
+            }
+        } catch (JSONException e) { /*Leave at null*/ }
+        int shift = hasCategoryField ? 0 : -1;
+        this.channel = fields[1+shift];
+        this.views = parseViews(fields[2+shift]);
+        this.duration = FormatTools.durationTextToMillis(fields[3+shift]);
     }
 
     private int parseViews(String raw) {

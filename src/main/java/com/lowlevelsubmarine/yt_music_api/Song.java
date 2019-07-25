@@ -13,37 +13,24 @@ public class Song {
     private final Cover cover;
     private final long duration;
 
-    Song(JSONObject obj, boolean containsCategory) {
-        this.id = obj.getJSONObject("doubleTapCommand").getJSONObject("watchEndpoint").getString("videoId");
-        JSONArray flexColumns = obj.getJSONArray("flexColumns");
-        String durationString;
-        if (containsCategory) {
-            this.artist = parseFlexColumnString(flexColumns, 2);
-            this.album = parseFlexColumnString(flexColumns, 3);
-            durationString = parseFlexColumnString(flexColumns, 4);
-        } else {
-            this.artist = parseFlexColumnString(flexColumns, 1);
-            this.album = parseFlexColumnString(flexColumns, 2);
-            durationString = parseFlexColumnString(flexColumns, 3);
-        }
+    Song(JSONObject json, boolean hasCategoryField) {
+        this.id = json.getJSONObject("doubleTapCommand").getJSONObject("watchEndpoint").getString("videoId");
+        JSONArray flexColumns = json.getJSONArray("flexColumns");
         this.title = JSONTools.flexColumnToString(flexColumns.getJSONObject(0));
-        if (durationString != null) {
-            this.duration = FormatTools.durationTextToMillis(durationString);
-        } else {
-            this.duration = -1;
-        }
-        this.cover = new Cover(obj.getJSONObject("thumbnail")
+        String[] fields = new String[4];
+        try {
+            for (int i = 0; i < 4; i++) {
+                fields[i] = JSONTools.flexColumnToString(flexColumns.getJSONObject(i + 1));
+            }
+        } catch (JSONException e) { /*Leave at null*/ }
+        int shift = hasCategoryField ? 0 : -1;
+        this.artist = fields[1+shift];
+        this.album = fields[2+shift];
+        this.duration = FormatTools.durationTextToMillis(fields[3+shift]);
+        this.cover = new Cover(json.getJSONObject("thumbnail")
                 .getJSONObject("musicThumbnailRenderer")
                 .getJSONObject("thumbnail")
                 .getJSONArray("thumbnails"));
-    }
-
-    private String parseFlexColumnString(JSONArray array, int index) {
-        try {
-            return JSONTools.flexColumnToString(array.getJSONObject(index));
-        } catch (JSONException e) {
-            return null;
-        }
     }
 
     public String getId() {
@@ -68,52 +55,6 @@ public class Song {
 
     public Cover getCover() {
         return this.cover;
-    }
-
-    public class Cover {
-
-        private String url60;
-        private String url120;
-        private String url226;
-        private String url544;
-
-        private Cover(JSONArray thumbnails) {
-            for (int i = 0; i < thumbnails.length(); i++) {
-                try {
-                    JSONObject thumbnail = thumbnails.getJSONObject(i);
-                    int width = thumbnail.getInt("width");
-                    String url = thumbnail.getString("url");
-                    if (width == 60) {
-                        this.url60 = url;
-                    } else if (width == 120) {
-                        this.url120 = url;
-                    } else if (width == 226) {
-                        this.url226 = url;
-                    } else if (width == 544) {
-                        this.url544 = url;
-                    }
-                } catch (Exception e) {
-                    //Does: Skip thumbnail
-                }
-            }
-        }
-
-        public String getUrl60() {
-            return url60;
-        }
-
-        public String getUrl120() {
-            return url120;
-        }
-
-        public String getUrl226() {
-            return url226;
-        }
-
-        public String getUrl544() {
-            return url544;
-        }
-
     }
     
 }

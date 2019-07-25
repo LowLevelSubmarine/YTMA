@@ -16,8 +16,18 @@ public class Context {
         return this;
     }
 
-    public Context setEnableAutoPlay(boolean bool) {
-        this.json.put("enableAutoPlay", bool);
+    public Context setIsAudioOnly(boolean isAudioOnly) {
+        this.json.put("isAudioOnly", isAudioOnly);
+        return this;
+    }
+
+    public Context setTunerSettingsValue(TunerSetting setting) {
+        this.json.put("tunerSettingValue", setting.getId());
+        return this;
+    }
+
+    public Context setEnablePersistentPlaylistPanel(boolean enablePersistentPlaylistPanel) {
+        this.json.put("enablePersistentPlaylistPanel", enablePersistentPlaylistPanel);
         return this;
     }
 
@@ -46,10 +56,25 @@ public class Context {
         JSONObject json = new JSONObject();
         json.put("clientName", "WEB_REMIX");
         json.put("clientVersion", "0.1");
-        //json.put("experimentIds", JSONObject.NULL);
-        //json.put("gl", "US");
-        //json.put("hl", "en");
+        json.put("gl", "US");
+        json.put("hl", "en");
         return json;
+    }
+
+    public enum TunerSetting {
+
+        AUTOMIX_SETTINGS_NORMAL("AUTOMIX_SETTING_NORMAL");
+
+        private final String id;
+
+        TunerSetting(String id) {
+             this.id = id;
+        }
+
+        public String getId() {
+            return this.id;
+        }
+
     }
 
 }
