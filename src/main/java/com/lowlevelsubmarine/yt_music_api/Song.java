@@ -4,14 +4,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Song {
 
-    private static final Pattern PATTERN_BRACKETS = Pattern.compile(" *[(]([^)]+)[)]");
+    private static final Pattern PATTERN_BRACKETS = Pattern.compile(" *[\\[(]([^)\\]]+)[)\\]]");
 
     private final String id;
     private final String title;
@@ -23,24 +22,33 @@ public class Song {
     private final long duration;
 
     Song(JSONObject json, boolean hasCategoryField) {
-        this.id = json.getJSONObject("doubleTapCommand").getJSONObject("watchEndpoint").getString("videoId");
-        JSONArray flexColumns = json.getJSONArray("flexColumns");
-        this.rawTitle = JSONTools.flexColumnToString(flexColumns.getJSONObject(0));
-        this.title = removeBrackets(rawTitle, this::processTitleBracket);
-        String[] fields = new String[4];
-        try {
-            for (int i = 0; i < 4; i++) {
-                fields[i] = JSONTools.flexColumnToString(flexColumns.getJSONObject(i + 1));
-            }
-        } catch (JSONException e) { /*Leave at null*/ }
-        int shift = hasCategoryField ? 0 : -1;
-        this.mainArtist = fields[1+shift];
-        this.album = fields[2+shift];
-        this.duration = FormatTools.durationTextToMillis(fields[3+shift]);
-        this.cover = new Cover(json.getJSONObject("thumbnail")
-                .getJSONObject("musicThumbnailRenderer")
-                .getJSONObject("thumbnail")
-                .getJSONArray("thumbnails"));
+        if (json.has("flexColumns")) {
+            this.id = json.getJSONObject("doubleTapCommand").getJSONObject("watchEndpoint").getString("videoId");
+            JSONArray flexColumns = json.getJSONArray("flexColumns");
+            this.rawTitle = JSONTools.flexColumnToString(flexColumns.getJSONObject(0));
+            String[] fields = new String[4];
+            try {
+                for (int i = 0; i < 4; i++) {
+                    fields[i] = JSONTools.flexColumnToString(flexColumns.getJSONObject(i + 1));
+                }
+            } catch (JSONException e) { /*Leave at null*/ }
+            int shift = hasCategoryField ? 0 : -1;
+            this.mainArtist = fields[1+shift];
+            this.album = fields[2+shift];
+            this.duration = FormatTools.durationTextToMillis(fields[3+shift]);
+            this.cover = new Cover(json.getJSONObject("thumbnail")
+                    .getJSONObject("musicThumbnailRenderer")
+                    .getJSONObject("thumbnail")
+                    .getJSONArray("thumbnails"));
+        } else {
+            this.id = json.getString("videoId");
+            this.rawTitle = JSONTools.convertRuns(json.getJSONObject("title"));
+            this.mainArtist = JSONTools.convertRuns(json.getJSONObject("shortBylineText"));
+            this.album = null;
+            this.duration = FormatTools.durationTextToMillis(JSONTools.convertRuns(json.getJSONObject("lengthText")));
+            this.cover = new Cover(json.getJSONObject("thumbnail").getJSONArray("thumbnails"));
+        }
+        this.title = removeBrackets(this.rawTitle, this::processTitleBracket);
     }
 
     private boolean processTitleBracket(String bracketContent) {
@@ -59,7 +67,6 @@ public class Song {
             }
             return false;
         }
-        System.out.println("#" + bracketContent);
         return true;
     }
 

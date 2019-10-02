@@ -1,8 +1,8 @@
 package testing;
 
+import com.lowlevelsubmarine.yt_music_api.NextResult;
 import com.lowlevelsubmarine.yt_music_api.SearchResults;
 import com.lowlevelsubmarine.yt_music_api.Song;
-import com.lowlevelsubmarine.yt_music_api.VideoResults;
 import com.lowlevelsubmarine.yt_music_api.YTMA;
 
 import java.util.Scanner;
@@ -18,7 +18,8 @@ public class Testing {
             String query = scanner.nextLine();
             System.out.println("Searching for: " + query + " ... ");
             SearchResults result = ytma.search(query);
-            for (Song song : result.fetchSongResults().getSongs()) {
+            NextResult next = ytma.getNext(result.getSongs().get(0).getId());
+            for (Song song : next.getNext()) {
                 String feats = "";
                 for (String string : song.getArtists()) {
                     feats += ", " + string;

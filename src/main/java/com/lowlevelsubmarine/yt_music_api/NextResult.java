@@ -36,11 +36,21 @@ public class NextResult {
         }
     }
 
+    public LinkedList<Song> getNext() {
+        return this.songs;
+    }
+
     private void parseJSON(String raw) {
         JSONObject json = new JSONObject(raw);
-        JSONArray array = json.getJSONArray("text");
-        for (int i = 0; i < array.length(); i++) {
-            JSONObject item = array.getJSONObject(i);
+        //"contents"/"singleColumnMusicWatchNextResultsRenderer"/"playlist"/"playlistPanelRenderer"/"contents"/[1-25]
+        JSONArray contents = json.getJSONObject("contents")
+                .getJSONObject("singleColumnMusicWatchNextResultsRenderer")
+                .getJSONObject("playlist")
+                .getJSONObject("playlistPanelRenderer")
+                .getJSONArray("contents");
+        for (int i = 0; i < contents.length(); i++) {
+            JSONObject item = contents.getJSONObject(i);
+            this.songs.add(new Song(item.getJSONObject("playlistPanelVideoRenderer"), false));
         }
     }
 
